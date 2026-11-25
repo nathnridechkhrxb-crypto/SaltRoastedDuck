@@ -1681,5 +1681,60 @@
     // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บเสร็จสมบูรณ์
     window.addEventListener('DOMContentLoaded', initApp);
   </script>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    push,
+    onValue,
+    update,
+    remove
+  } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFMKeRXjlkbMxD-VGzkXYexs5SOWMpdDI",
+    authDomain: "salt-roasted-duck.firebaseapp.com",
+    databaseURL: "https://salt-roasted-duck-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "salt-roasted-duck",
+    storageBucket: "salt-roasted-duck.firebasestorage.app",
+    messagingSenderId: "977930014101",
+    appId: "1:977930014101:web:78cd63c53c33f84cea3a9c",
+    measurementId: "G-QQN88Z15LY"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const ordersRef = ref(db, "orders");
+
+  window.saveOrderToFirebase = async function (orderData) {
+    await push(ordersRef, {
+      ...orderData,
+      status: orderData.status || "รอดำเนินการ",
+      createdAt: Date.now()
+    });
+  };
+
+  window.subscribeOrdersFromFirebase = function (callback) {
+    onValue(ordersRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const list = Object.entries(data).map(([id, value]) => ({
+        id,
+        ...value
+      }));
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      callback(list);
+    });
+  };
+
+  window.updateOrderStatusInFirebase = async function (orderId, newStatus) {
+    await update(ref(db, `orders/${orderId}`), { status: newStatus });
+  };
+
+  window.deleteOrderFromFirebase = async function (orderId) {
+    await remove(ref(db, `orders/${orderId}`));
+  };
+</script>
+
 </body>
 </html>
